@@ -334,13 +334,24 @@ export const footer = {
     { label: 'Transport',     href: '#transport' },
     { label: 'Blind relay',   href: '#relay' },
   ],
+  doc: {
+    kicker: 'Full documentation',
+    title: 'System Documentation Manual',
+    meta: '22 sections · 43 pages · PDF',
+    blurb:
+      'Every claim on this page cites a section of this document. Read it and check them.',
+    href: '/aegis-documentation.pdf',
+    cta: 'View document',
+  },
   /* Every qualification collects here, each linked to the section stating it. */
+  /* Each links to the page of the manual that states it, so a reader can
+     verify the qualification rather than take it on trust. */
   disclaimers: [
-    { text: 'The adversary model is an illustration, not live cryptanalysis.', ref: '§15' },
-    { text: 'Content confidentiality is not metadata privacy.',                ref: '§14.3' },
-    { text: 'Four claims we explicitly avoid making.',                          ref: '§3.3' },
-    { text: 'Open items and unbuilt work, tracked honestly.',                   ref: '§19' },
-    { text: 'No formal verification or independent audit has been performed.',  ref: '§19.1' },
+    { text: 'The adversary model is an illustration, not live cryptanalysis.', ref: '§15',   page: 26 },
+    { text: 'Content confidentiality is not metadata privacy.',                ref: '§14.3', page: 25 },
+    { text: 'Four claims we explicitly avoid making.',                          ref: '§3.3',  page: 6 },
+    { text: 'Open items and unbuilt work, tracked honestly.',                   ref: '§19',   page: 34 },
+    { text: 'No formal verification or independent audit has been performed.',  ref: '§19.1', page: 34 },
   ],
   notice: 'Aegis — prototype. Not audited. Not for production use.',
 };

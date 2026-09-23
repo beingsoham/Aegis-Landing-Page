@@ -68,6 +68,12 @@ docs/         reference renders
 
 ![Architecture](public/architecture.png)
 
+## Documentation
+
+The full [System Documentation Manual](public/aegis-documentation.pdf) is served
+with the site. Each qualification in the footer deep-links to the page of the
+manual that states it.
+
 ## Team
 
 | | |

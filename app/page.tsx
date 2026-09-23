@@ -191,6 +191,14 @@ function Footer() {
   return (
     <footer className={s.footer}>
       <Shell>
+        <a className={s.docCard} href={C.footer.doc.href} target="_blank" rel="noopener">
+          <span className={s.docKicker}>{C.footer.doc.kicker}</span>
+          <span className={s.docTitle}>{C.footer.doc.title}</span>
+          <span className={s.docMeta}>{C.footer.doc.meta}</span>
+          <span className={s.docBlurb}>{C.footer.doc.blurb}</span>
+          <span className={s.docCta}>{C.footer.doc.cta} <span aria-hidden="true">↗</span></span>
+        </a>
+
         <div className={s.footerLinks}>
           {C.footer.links.map((l) => <a className={s.footerLink} key={l.label} href={l.href}>{l.label}</a>)}
         </div>
@@ -203,7 +211,10 @@ function Footer() {
         </dl>
         <ul className={s.disclaimers}>
           {C.footer.disclaimers.map((d) => (
-            <li key={d.ref}>{d.text} <a href="#">{d.ref}</a></li>
+            <li key={d.ref}>
+              {d.text}{' '}
+              <a href={`${C.footer.doc.href}#page=${d.page}`} target="_blank" rel="noopener">{d.ref}</a>
+            </li>
           ))}
         </ul>
         <p className={s.notice}>{C.footer.notice}</p>
