@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aegis — CRT Object Prototype</title>
+<style>
+  :root{ --ink:#101010; --accent:#FFD600; --mute:#868686; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--ink);color:var(--accent);
+    font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;overflow:hidden}
+  #app{position:fixed;inset:0}
+  canvas{display:block}
+  .hud{position:fixed;z-index:10;font-size:11px;letter-spacing:-.02em;pointer-events:none}
+  #title{top:24px;left:24px;text-transform:uppercase}
+  #title b{font-size:13px;letter-spacing:-.04em}
+  #title span{color:var(--mute);display:block;margin-top:4px}
+  #hint{bottom:24px;left:24px;color:var(--mute)}
+  #panel{position:fixed;top:20px;right:20px;z-index:20;width:236px;padding:14px;
+    background:rgba(16,16,16,.88);border:1px solid rgba(255,214,0,.25);
+    backdrop-filter:blur(6px);font-size:10px;text-transform:uppercase;letter-spacing:-.02em}
+  #panel h4{margin:0 0 10px;font-size:10px;color:var(--accent);letter-spacing:.04em;
+    border-bottom:1px solid rgba(255,214,0,.2);padding-bottom:7px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0}
+  .row label{color:var(--mute);flex:1;white-space:nowrap}
+  .row output{color:var(--accent);width:40px;text-align:right;font-variant-numeric:tabular-nums}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:96px;height:2px;
+    background:rgba(255,214,0,.3);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;
+    background:var(--accent);cursor:pointer;border-radius:50%}
+  input[type=range]::-moz-range-thumb{width:9px;height:9px;background:var(--accent);
+    cursor:pointer;border:none;border-radius:50%}
+  #panel hr{border:0;border-top:1px solid rgba(255,214,0,.15);margin:11px 0}
+  #dump{margin-top:11px;width:100%;padding:6px;background:transparent;cursor:pointer;
+    border:1px solid rgba(255,214,0,.4);color:var(--accent);font:inherit;
+    font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+  #dump:hover{background:var(--accent);color:var(--ink)}
+  #out{margin-top:8px;color:var(--mute);font-size:9px;line-height:1.5;
+    word-break:break-all;text-transform:none;letter-spacing:0}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="hud" id="title">
+  <b>AEGIS — CRT OBJECT</b>
+  <span>move the cursor · the set turns to face it</span>
+</div>
+<div class="hud" id="hint">prototype geometry — final model swaps in at the same transform</div>
+
+<div id="panel">
+  <h4>Tuning</h4>
+  <div class="row"><label>yaw range</label><input id="yaw" type="range" min="0" max="45" step="1" value="18"><output id="yawV">18</output></div>
+  <div class="row"><label>pitch range</label><input id="pitch" type="range" min="0" max="30" step="1" value="7"><output id="pitchV">7</output></div>
+  <div class="row"><label>damping</label><input id="damp" type="range" min="1" max="20" step="0.5" value="6"><output id="dampV">6</output></div>
+  <hr>
+  <div class="row"><label>scramble fps</label><input id="fps" type="range" min="4" max="30" step="1" value="15"><output id="fpsV">15</output></div>
+  <div class="row"><label>scanlines</label><input id="scan" type="range" min="0" max="0.6" step="0.02" value="0.22"><output id="scanV">.22</output></div>
+  <div class="row"><label>grille</label><input id="grille" type="range" min="0" max="1" step="0.05" value="0.45"><output id="grilleV">.45</output></div>
+  <div class="row"><label>aberration</label><input id="aberr" type="range" min="0" max="2" step="0.05" value="0.5"><output id="aberrV">.50</output></div>
+  <div class="row"><label>hum bar</label><input id="hum" type="range" min="0" max="0.5" step="0.02" value="0.12"><output id="humV">.12</output></div>
+  <div class="row"><label>glass sheen</label><input id="sheen" type="range" min="0" max="1" step="0.02" value="0.32"><output id="sheenV">.32</output></div>
+  <div class="row"><label>static</label><input id="noise" type="range" min="0" max="0.6" step="0.01" value="0.10"><output id="noiseV">.06</output></div>
+  <div class="row"><label>phosphor</label><input id="glow" type="range" min="0.5" max="4" step="0.1" value="1.25"><output id="glowV">1.25</output></div>
+  <hr>
+  <div class="row"><label>bloom</label><input id="bloom" type="range" min="0" max="2" step="0.05" value="0.40"><output id="bloomV">.40</output></div>
+  <div class="row"><label>exposure</label><input id="bright" type="range" min="0.6" max="4" step="0.05" value="1.10"><output id="brightV">1.10</output></div>
+  <div class="row"><label>gamma</label><input id="gamma" type="range" min="0.3" max="1.2" step="0.002" value="0.622"><output id="gammaV">.622</output></div>
+  <div class="row"><label>rgb shift</label><input id="shift" type="range" min="0" max="0.3" step="0.01" value="0.05"><output id="shiftV">.05</output></div>
+  <button id="dump">copy values</button>
+  <div id="out"></div>
+</div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass }     from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass }from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass }     from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass }     from 'three/addons/postprocessing/OutputPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const INK = 0x101010, AMBER = '#FFD600';
+
+/* ---------- renderer ------------------------------------------------------
+   antialias MUST be set here — assigning renderer.antialias later does
+   nothing, the WebGL context is already built without it.                  */
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.NoToneMapping;   // keep >1 values for the bloom threshold
+// a bare canvas announces nothing to a screen reader
+renderer.domElement.setAttribute('role','img');
+renderer.domElement.setAttribute('aria-label',
+  'A cathode-ray television. Its screen cycles between the ciphertext SGVsbG8gV29ybGQh and the decrypted text Hello World exclamation mark.');
+document.getElementById('app').appendChild(renderer.domElement);
+
+/* An IBL probe is what separates "plastic-looking" from plastic. Directional
+   lights alone give flat shading; an environment gives real specular response
+   across the whole surface. RoomEnvironment is procedural — no asset needed. */
+const scene  = new THREE.Scene();
+{
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  pmrem.compileEquirectangularShader();
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+}
+scene.background = new THREE.Color(INK);
+const camera = new THREE.PerspectiveCamera(28, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0, 0.06, 9.5);
+
+/* ---------- lights --------------------------------------------------------*/
+scene.add(new THREE.AmbientLight(0xe4e8ee, 0.10));
+const key = new THREE.DirectionalLight(0xffffff, 1.35); key.position.set(-4.5,5,7); scene.add(key);
+const rim = new THREE.DirectionalLight(0xc9d8f0, 0.50); rim.position.set(6,-0.5,3); scene.add(rim);
+const fill= new THREE.DirectionalLight(0x8899ff, 0.25); fill.position.set(3,2,-5); scene.add(fill);
+const front=new THREE.DirectionalLight(0xffffff, 0.30); front.position.set(0,0,10); scene.add(front);
+
+/* ---------- the set -------------------------------------------------------
+   1990s TV/VHS combo matched to reference: light warm-grey plastic, WEDGE
+   back (top slopes down to the rear, front stays tall), chunky raised screen
+   frame with the tube set deep behind it, front panel with button row, two
+   tape slots and a speaker grille. No maker's mark — the reference carries a
+   real trademark and we are not reproducing it.                           */
+const tv = new THREE.Group(); scene.add(tv);
+
+function plasticTexture(){
+  const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+  const g = c.getContext('2d');
+  g.fillStyle = '#adaeaa'; g.fillRect(0,0,512,512);
+  for (let i=0;i<2600;i++){
+    const x=Math.random()*512, y=Math.random()*512, r=Math.random()*2.6;
+    g.fillStyle = Math.random()<0.55 ? `rgba(84,86,82,${Math.random()*0.16})`
+                                     : `rgba(214,216,212,${Math.random()*0.10})`;
+    g.beginPath(); g.arc(x,y,r,0,7); g.fill();
+  }
+  for (let i=0;i<90;i++){                       // grime pooling
+    const x=Math.random()*512, y=Math.random()*512, r=6+Math.random()*22;
+    const rg=g.createRadialGradient(x,y,0,x,y,r);
+    rg.addColorStop(0,`rgba(78,80,76,${0.03+Math.random()*0.06})`);
+    rg.addColorStop(1,'rgba(78,80,76,0)');
+    g.fillStyle=rg; g.beginPath(); g.arc(x,y,r,0,7); g.fill();
+  }
+  for (let i=0;i<80;i++){                       // scratches
+    g.strokeStyle = `rgba(232,230,220,${0.05+Math.random()*0.12})`;
+    g.lineWidth = Math.random()*1.2;
+    const x=Math.random()*512, y=Math.random()*512;
+    g.beginPath(); g.moveTo(x,y);
+    g.lineTo(x+(Math.random()-0.5)*150, y+(Math.random()-0.5)*45); g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+/* One colour map shades flat. Deriving a normal map (Sobel over luminance)
+   and a roughness map from the same grime makes the surface break up under
+   the specular, which is most of what reads as "real". */
+function deriveMaps(srcCanvas){
+  const W = srcCanvas.width, H = srcCanvas.height;
+  const src = srcCanvas.getContext('2d').getImageData(0,0,W,H).data;
+  const lum = new Float32Array(W*H);
+  for (let i=0;i<W*H;i++) lum[i] = (src[i*4]*0.299 + src[i*4+1]*0.587 + src[i*4+2]*0.114)/255;
+
+  const nc = document.createElement('canvas'); nc.width=W; nc.height=H;
+  const nd = nc.getContext('2d').createImageData(W,H);
+  const rc = document.createElement('canvas'); rc.width=W; rc.height=H;
+  const rd = rc.getContext('2d').createImageData(W,H);
+  const at = (x,y) => lum[((y+H)%H)*W + ((x+W)%W)];
+  const STR = 2.6;
+  for (let y=0;y<H;y++) for (let x=0;x<W;x++){
+    const i = (y*W+x);
+    const dx = (at(x+1,y)-at(x-1,y))*STR;
+    const dy = (at(x,y+1)-at(x,y-1))*STR;
+    const len = Math.hypot(dx,dy,1);
+    nd.data[i*4]   = ((-dx/len)*0.5+0.5)*255;
+    nd.data[i*4+1] = ((-dy/len)*0.5+0.5)*255;
+    nd.data[i*4+2] = ((1/len)*0.5+0.5)*255;
+    nd.data[i*4+3] = 255;
+    // darker grime = rougher, bright scratches = smoother
+    const r = Math.max(0, Math.min(1, 0.62 + (0.5-lum[i])*0.85));
+    rd.data[i*4] = rd.data[i*4+1] = rd.data[i*4+2] = r*255;
+    rd.data[i*4+3] = 255;
+  }
+  nc.getContext('2d').putImageData(nd,0,0);
+  rc.getContext('2d').putImageData(rd,0,0);
+  const mk = c => { const t=new THREE.CanvasTexture(c);
+    t.wrapS=t.wrapT=THREE.RepeatWrapping; return t; };
+  return { normalMap: mk(nc), roughnessMap: mk(rc) };
+}
+
+const plasticTex = plasticTexture();
+const derived = deriveMaps(plasticTex.image);
+const maxAniso = renderer.capabilities.getMaxAnisotropy();
+[plasticTex, derived.normalMap, derived.roughnessMap].forEach(t => t.anisotropy = maxAniso);
+const surf = { map:plasticTex, normalMap:derived.normalMap, roughnessMap:derived.roughnessMap,
+               normalScale:new THREE.Vector2(0.75,0.75), envMapIntensity:0.24 };
+const shellM = new THREE.MeshStandardMaterial({ ...surf, color:0xc6c8c4, roughness:0.82, metalness:0.04 });
+const frameM = new THREE.MeshStandardMaterial({ ...surf, color:0xbcbeba, roughness:0.80, metalness:0.04 });
+const panelM = new THREE.MeshStandardMaterial({ ...surf, color:0xa4a6a2, roughness:0.74, metalness:0.06 });
+const blackM = new THREE.MeshStandardMaterial({ color:0x1b1b18, roughness:0.52, metalness:0.12, envMapIntensity:0.5 });
+const btnM   = new THREE.MeshStandardMaterial({ color:0xd2d2cc, roughness:0.44, metalness:0.08, envMapIntensity:0.55 });
+const redM   = new THREE.MeshStandardMaterial({ color:0x9c352c, roughness:0.5,  metalness:0.06 });
+const footM  = new THREE.MeshStandardMaterial({ color:0x2a2a25, roughness:0.88, metalness:0.04 });
+
+function roundedRect(w,h,r){
+  const x=w/2, y=h/2, sh=new THREE.Shape();
+  sh.moveTo(-x+r,-y);
+  sh.lineTo(x-r,-y);  sh.quadraticCurveTo(x,-y, x,-y+r);
+  sh.lineTo(x,y-r);   sh.quadraticCurveTo(x,y, x-r,y);
+  sh.lineTo(-x+r,y);  sh.quadraticCurveTo(-x,y, -x,y-r);
+  sh.lineTo(-x,-y+r); sh.quadraticCurveTo(-x,-y, -x+r,-y);
+  return sh;
+}
+
+const CAB_W = 3.30, CAB_H = 3.34, CAB_D = 3.10, CAB_Y = 0.0;
+const SCR_W = 2.88, SCR_H = 2.16, SCR_R = 0.30;
+const SCR_X = 0.0,  SCR_Y = 0.36, FRONT_Z = CAB_D/2;
+
+/* body — the wedge is the signature: top drops toward the back, front full height */
+{
+  // real moulded plastic never has a knife edge — the tiny radius catches a
+  // highlight all the way round, which is a strong realism cue
+  const g = new RoundedBoxGeometry(CAB_W, CAB_H, CAB_D, 6, 0.055);
+  const pos = g.attributes.position;
+  for (let i=0;i<pos.count;i++){
+    const z = pos.getZ(i);
+    if (z < -0.01){
+      const t = Math.abs(z)/(CAB_D/2);
+      pos.setX(i, pos.getX(i) * (1 - 0.20*t));
+      if (pos.getY(i) > 0) pos.setY(i, pos.getY(i) * (1 - 0.46*t));
+    }
+  }
+  g.computeVertexNormals();
+  const body = new THREE.Mesh(g, shellM);
+  body.position.y = CAB_Y; tv.add(body);
+}
+/* the flat fin that juts out of the back-left on the reference */
+{
+  const fin = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.30, 0.62), shellM);
+  fin.position.set(-CAB_W/2 + 0.22, CAB_Y - 0.55, -CAB_D/2 - 0.22); tv.add(fin);
+}
+
+/* chunky raised screen frame, tube set deep behind it */
+{
+  const face = new THREE.Shape();
+  face.moveTo(-1.59,-1.23); face.lineTo(1.59,-1.23);
+  face.lineTo(1.59,1.23);   face.lineTo(-1.59,1.23); face.closePath();
+  face.holes.push(roundedRect(SCR_W, SCR_H, SCR_R));
+  const frame = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(face, { depth:0.30, bevelEnabled:true, bevelThickness:0.03,
+                                      bevelSize:0.045, bevelSegments:3 }), frameM);
+  frame.position.set(SCR_X, SCR_Y, FRONT_Z - 0.02); tv.add(frame);
+  /* inner step, so the tube reads as recessed rather than flush */
+  const step = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(roundedRect(SCR_W+0.10, SCR_H+0.10, SCR_R+0.04),
+      { depth:0.03, bevelEnabled:false }), blackM);
+  step.position.set(SCR_X, SCR_Y, FRONT_Z + 0.005); tv.add(step);
+}
+
+/* front control panel: label plate, button row, DVD / VHS slots, speaker */
+{
+  const PY = CAB_Y - 1.32;
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(3.06, 0.62, 0.05), panelM);
+  panel.position.set(SCR_X, PY, FRONT_Z + 0.02); tv.add(panel);
+
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.075, 0.02), blackM);
+  plate.position.set(SCR_X, PY + 0.24, FRONT_Z + 0.05); tv.add(plate);
+
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(1.76, 0.155, 0.025), blackM);
+  bar.position.set(SCR_X - 0.10, PY + 0.10, FRONT_Z + 0.05); tv.add(bar);
+  for (let i=0;i<14;i++){
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.082, 0.115, 0.03),
+                             i >= 10 ? redM : btnM);
+    b.position.set(SCR_X - 0.90 + i*0.118, PY + 0.10, FRONT_Z + 0.068); tv.add(b);
+  }
+  for (const [x,w] of [[-0.92,0.80],[-0.02,0.80]]){
+    const slot = new THREE.Mesh(new THREE.BoxGeometry(w, 0.22, 0.025), blackM);
+    slot.position.set(SCR_X + x, PY - 0.14, FRONT_Z + 0.05); tv.add(slot);
+    const lip = new THREE.Mesh(new THREE.BoxGeometry(w-0.05, 0.035, 0.02), panelM);
+    lip.position.set(SCR_X + x, PY - 0.205, FRONT_Z + 0.072); tv.add(lip);
+  }
+  for (let i=0;i<7;i++){
+    const sl = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.17, 0.02), blackM);
+    sl.position.set(SCR_X + 0.66 + i*0.052, PY - 0.14, FRONT_Z + 0.05); tv.add(sl);
+  }
+}
+
+/* side vents — lower right panel */
+for (let i=0;i<10;i++){
+  const v = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.026, 0.82), blackM);
+  v.position.set(CAB_W/2 - 0.03, CAB_Y - 0.66 - i*0.068, -0.22); tv.add(v);
+}
+
+/* soft contact shadow — a radial falloff plane, cheaper and softer than a
+   shadow map for a single grounded object */
+{
+  const sc = document.createElement('canvas'); sc.width = sc.height = 256;
+  const sg2 = sc.getContext('2d');
+  const rg = sg2.createRadialGradient(128,128,0,128,128,126);
+  rg.addColorStop(0,'rgba(0,0,0,0.72)'); rg.addColorStop(0.55,'rgba(0,0,0,0.28)');
+  rg.addColorStop(1,'rgba(0,0,0,0)');
+  sg2.fillStyle = rg; sg2.fillRect(0,0,256,256);
+  const shadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.6, 3.4),
+    new THREE.MeshBasicMaterial({ map:new THREE.CanvasTexture(sc), transparent:true,
+                                  depthWrite:false, opacity:0.85 }));
+  shadow.rotation.x = -Math.PI/2;
+  shadow.position.set(0, CAB_Y - CAB_H/2 - 0.115, 0.1); tv.add(shadow);
+}
+
+/* feet */
+for (const sx of [-1,1]) for (const sz of [-1,1]){
+  const f = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.085, 0.13, 12), footM);
+  f.position.set(sx*1.34, CAB_Y - CAB_H/2 - 0.05, sz*1.05); tv.add(f);
+}
+
+/* ---------- screen texture ------------------------------------------------
+   640x480 canvas, uploaded ONLY on a scramble tick. Pushing a texture every
+   frame is wasted bandwidth, and the scramble reads better at ~15fps
+   because it looks like a refresh rate rather than an animation.           */
+const SC = document.createElement('canvas'); SC.width = 640; SC.height = 480;
+const cx = SC.getContext('2d');
+const screenTex = new THREE.CanvasTexture(SC);
+screenTex.colorSpace = THREE.SRGBColorSpace;
+screenTex.minFilter = THREE.LinearFilter;
+
+const CIPHER = 'SGVsbG8gV29ybGQh';          // real base64 of "Hello World!"
+const PLAIN  = '  Hello World!  ';          // padded to the same 16 columns
+const B64    = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+const rnd    = () => B64[(Math.random()*B64.length)|0];
+
+let phase = 'cipher', pTick = 0, field = CIPHER.split('');
+const HOLD_C = 26, HOLD_P = 34;
+
+function step(){
+  if (REDUCED){ field = PLAIN.split(''); phase='plain'; return; }
+  pTick++;
+  if (phase === 'cipher'){
+    field = CIPHER.split('').map(c => Math.random() < 0.06 ? rnd() : c);
+    if (pTick > HOLD_C){ phase='decrypt'; pTick=0; }
+  } else if (phase === 'decrypt'){
+    const n = Math.min(pTick, 16);
+    field = Array.from({length:16}, (_,i) => i < n ? PLAIN[i] : rnd());
+    if (n >= 16){ phase='plain'; pTick=0; }
+  } else if (phase === 'plain'){
+    field = PLAIN.split('');
+    if (pTick > HOLD_P){ phase='encrypt'; pTick=0; }
+  } else {
+    const n = Math.min(pTick, 16);
+    field = Array.from({length:16}, (_,i) => i < 16-n ? PLAIN[i] : rnd());
+    if (n >= 16){ field = CIPHER.split(''); phase='cipher'; pTick=0; }
+  }
+}
+
+const STATUS = { cipher:'CIPHERTEXT', decrypt:'DECRYPTING', plain:'PLAINTEXT', encrypt:'ENCRYPTING' };
+function paint(){
+  cx.fillStyle = '#090806'; cx.fillRect(0,0,640,480);
+  cx.textAlign = 'center';
+  cx.fillStyle = 'rgba(255,214,0,.42)'; cx.font = '600 22px ui-monospace,monospace';
+  cx.fillText('AEGIS · AES-256-GCM', 320, 150);
+  cx.fillStyle = AMBER; cx.font = '700 52px ui-monospace,monospace';
+  cx.fillText(field.join(''), 320, 262);
+  cx.fillStyle = 'rgba(255,214,0,.5)'; cx.font = '600 20px ui-monospace,monospace';
+  cx.fillText(STATUS[phase], 320, 340);
+  cx.strokeStyle = 'rgba(255,214,0,.22)'; cx.lineWidth = 2;
+  cx.beginPath(); cx.moveTo(150,186); cx.lineTo(490,186); cx.stroke();
+  screenTex.needsUpdate = true;
+}
+step(); paint();
+
+/* ---------- CRT screen shader --------------------------------------------*/
+const screenMat = new THREE.ShaderMaterial({
+  uniforms:{
+    tScreen:{value:screenTex}, uTime:{value:0}, uCurve:{value:0.28},
+    uScan:{value:0.22}, uGrille:{value:0.45}, uAberr:{value:0.5},
+    uHum:{value:0.12}, uNoise:{value:0.10}, uGlow:{value:1.25},
+    uAspect:{value:2.88/2.16}, uRadius:{value:0.30}, uSheen:{value:0.32}
+  },
+  vertexShader:`
+    varying vec2 vUv;
+    void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+  fragmentShader:`
+    uniform sampler2D tScreen;
+    uniform float uTime,uCurve,uScan,uGrille,uAberr,uHum,uNoise,uGlow,uAspect,uRadius,uSheen;
+    varying vec2 vUv;
+    float roundedBox(vec2 p, vec2 b, float r){
+      vec2 d = abs(p) - b + r;
+      return min(max(d.x,d.y),0.0) + length(max(d,0.0)) - r;
+    }
+    vec2 curve(vec2 uv){
+      uv = uv*2.0-1.0;
+      vec2 off = abs(uv.yx)/vec2(5.0,3.6);
+      uv += uv*off*off*uCurve;
+      return uv*0.5+0.5;
+    }
+    float hash(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
+    void main(){
+      vec2 uv = curve(vUv);
+      if(uv.x<0.0||uv.x>1.0||uv.y<0.0||uv.y>1.0){ gl_FragColor=vec4(0.0,0.0,0.0,1.0); return; }
+      vec2 d = uv-0.5; float r2 = dot(d,d);
+      float a = uAberr*r2*0.06;
+      vec3 col;
+      col.r = texture2D(tScreen, uv+d*a).r;
+      col.g = texture2D(tScreen, uv).g;
+      col.b = texture2D(tScreen, uv-d*a).b;
+      float sl = sin((uv.y + uTime*0.015)*760.0);
+      col *= 1.0 - uScan*(0.5+0.5*sl);
+      float g = mod(gl_FragCoord.x, 3.0);
+      vec3 mask = g<1.0 ? vec3(1.0,0.72,0.72) : (g<2.0 ? vec3(0.72,1.0,0.72) : vec3(0.72,0.72,1.0));
+      col *= mix(vec3(1.0), mask, uGrille);
+      float bar = fract(uv.y - uTime*0.05);
+      col *= 1.0 + uHum*smoothstep(0.0,0.09,bar)*smoothstep(0.2,0.09,bar);
+      float lum = dot(col, vec3(0.299,0.587,0.114));
+      col += (hash(uv*vec2(640.0,480.0)+fract(uTime)*97.0)-0.5)*uNoise*(0.18+lum);
+      col *= 1.0 - 1.15*r2;
+      // bezel casts into the recess: top edge falls off
+      col *= 1.0 - 0.40*smoothstep(0.78, 1.0, vUv.y);
+      // broad diagonal sheen across the glass — the most characteristic
+      // feature of the reference photographs
+      float band = (vUv.x*0.78 + vUv.y*1.15) - 1.02;
+      col += smoothstep(0.46, 0.0, abs(band)) * uSheen * vec3(0.82,0.86,0.95) * 0.34;
+      // rounded-rect tube mask, matching the bezel cut
+      vec2 pm = (vUv*2.0-1.0) * vec2(uAspect, 1.0);
+      float sd = roundedBox(pm, vec2(uAspect, 1.0), uRadius);
+      float tubeMask = 1.0 - smoothstep(-0.012, 0.012, sd);
+      gl_FragColor = vec4(max(col,0.0)*uGlow*tubeMask, 1.0);
+    }`,
+  toneMapped:false
+});
+
+// subtle physical bulge so the silhouette curves too, not just the UVs
+const sg = new THREE.PlaneGeometry(SCR_W, SCR_H, 44, 32);
+{
+  const p = sg.attributes.position;
+  for (let i=0;i<p.count;i++){
+    const x=p.getX(i)/(SCR_W/2), y=p.getY(i)/(SCR_H/2);
+    p.setZ(i, (1.0-x*x*0.5)*(1.0-y*y*0.5)*0.115);
+  }
+  sg.computeVertexNormals();
+}
+const screen = new THREE.Mesh(sg, screenMat);
+// FRONT_Z is the body box's front FACE — anything behind it is inside the
+// solid and gets occluded. The tube sits just proud of it, recessed only
+// relative to the hood, which protrudes to FRONT_Z + 0.22.
+screen.position.set(SCR_X, SCR_Y, FRONT_Z + 0.035); tv.add(screen);
+
+// No separate glass pane. A clearcoat/transmission pane needs a real env map;
+// without one it renders as a milky sheet over the tube. The CRT shader's own
+// curvature, aberration and vignette already read as glass.
+
+/* ---------- post: render -> bloom -> composite ---------------------------*/
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight), 0.40, 0.45, 1.0);
+composer.addPass(bloom);
+const composite = new ShaderPass({
+  uniforms:{ tDiffuse:{value:null}, uGamma:{value:0.622}, uShift:{value:0.05}, uBright:{value:1.10},
+             uAngle:{value:1.02}, uTint:{value:new THREE.Color(0xfff38a)} },
+  vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader:`
+    uniform sampler2D tDiffuse; uniform float uGamma,uShift,uAngle,uBright; uniform vec3 uTint;
+    varying vec2 vUv;
+    void main(){
+      vec2 dir = vec2(cos(uAngle),sin(uAngle))*uShift*0.008;
+      vec3 c;
+      c.r = texture2D(tDiffuse, vUv+dir).r;
+      c.g = texture2D(tDiffuse, vUv).g;
+      c.b = texture2D(tDiffuse, vUv-dir).b;
+      c *= uBright;
+      float lum = dot(c, vec3(0.2126,0.7152,0.0722));
+      c = mix(c, c*uTint, smoothstep(0.90,1.0,lum));   // warm ONLY the phosphor
+      gl_FragColor = vec4(pow(max(c,0.0), vec3(1.0/uGamma)), 1.0);
+    }`
+});
+composer.addPass(composite);
+composer.addPass(new OutputPass());
+
+/* ---------- pointer tracking ---------------------------------------------
+   Clamped look-at, never free rotation. Damping uses 1-exp(-k*dt) so it
+   behaves identically at 60fps and 144fps — a fixed-alpha lerp does not.   */
+let MAX_YAW = THREE.MathUtils.degToRad(18);
+let MAX_PITCH = THREE.MathUtils.degToRad(7);
+let DAMP = 6;
+const ptr = new THREE.Vector2(0,0);
+let engaged = false, lastMove = performance.now();
+
+addEventListener('pointermove', e => {
+  ptr.set((e.clientX/innerWidth)*2-1, (e.clientY/innerHeight)*2-1);
+  engaged = true; lastMove = performance.now();
+});
+addEventListener('pointerleave', () => engaged = false);
+addEventListener('blur', () => engaged = false);
+
+const $ = id => document.getElementById(id);
+const fpsEl = $('fps');
+const clock = new THREE.Clock();
+let acc = 0;
+
+function frame(){
+  requestAnimationFrame(frame);
+  const dt = Math.min(clock.getDelta(), 0.1);
+  const t  = clock.elapsedTime;
+
+  // scramble tick
+  const fps = +fpsEl.value;
+  acc += dt;
+  if (acc > 1/fps){ acc = 0; step(); paint(); }
+
+  // idle drift when the pointer has been still, or on touch
+  const idle = !engaged || (performance.now() - lastMove) > 2500;
+  let tx, ty;
+  if (idle && !REDUCED){
+    tx = Math.sin(t*0.35)*MAX_YAW*0.3;
+    ty = Math.sin(t*0.27+1.2)*MAX_PITCH*0.3;
+  } else if (idle){ tx = 0; ty = 0; }
+  else { tx = ptr.x*MAX_YAW; ty = ptr.y*MAX_PITCH; }
+
+  const k = 1 - Math.exp(-DAMP*dt);
+  tv.rotation.y += (tx - tv.rotation.y)*k;
+  tv.rotation.x += (ty - tv.rotation.x)*k;
+
+  screenMat.uniforms.uTime.value = REDUCED ? 0 : t;
+  composer.render();
+}
+frame();
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+});
+
+/* ---------- tuning panel --------------------------------------------------*/
+const bind = (id, fn, dp=2) => {
+  const el = $(id), out = $(id+'V');
+  const run = () => { const v = +el.value; fn(v);
+    out.textContent = dp===0 ? v : String(v.toFixed(dp)).replace(/^0/,''); };
+  el.addEventListener('input', run); run();
+};
+bind('yaw',   v => MAX_YAW   = THREE.MathUtils.degToRad(v), 0);
+bind('pitch', v => MAX_PITCH = THREE.MathUtils.degToRad(v), 0);
+bind('damp',  v => DAMP = v, 1);
+bind('fps',   () => {}, 0);
+bind('scan',   v => screenMat.uniforms.uScan.value   = v);
+bind('grille', v => screenMat.uniforms.uGrille.value = v);
+bind('aberr',  v => screenMat.uniforms.uAberr.value  = v);
+bind('hum',    v => screenMat.uniforms.uHum.value    = v);
+bind('noise',  v => screenMat.uniforms.uNoise.value  = v);
+bind('sheen',  v => screenMat.uniforms.uSheen.value  = v);
+bind('glow',   v => screenMat.uniforms.uGlow.value   = v, 1);
+bind('bloom',  v => bloom.strength = v);
+bind('bright', v => composite.uniforms.uBright.value = v, 2);
+bind('gamma',  v => composite.uniforms.uGamma.value  = v, 3);
+bind('shift',  v => composite.uniforms.uShift.value  = v);
+
+$('dump').addEventListener('click', () => {
+  const cfg = {
+    yawDeg:+$('yaw').value, pitchDeg:+$('pitch').value, damping:+$('damp').value,
+    scrambleFps:+$('fps').value,
+    crt:{ scanlines:+$('scan').value, grille:+$('grille').value, aberration:+$('aberr').value,
+          humBar:+$('hum').value, static:+$('noise').value, phosphor:+$('glow').value },
+    post:{ bloomStrength:+$('bloom').value, exposure:+$('bright').value, finalGamma:+$('gamma').value, rgbShift:+$('shift').value }
+  };
+  const s = JSON.stringify(cfg, null, 2);
+  $('out').textContent = s;
+  navigator.clipboard?.writeText(s).catch(()=>{});
+});
+
+// debug hook — lets a headless check force a frame and read state
+window.__aegis = { tv, screenMat, composite, bloom, composer, renderer, scene, camera,
+                   render: () => composer.render(),
+                   state: () => ({ phase, field: field.join(''),
+                                   yaw: tv.rotation.y, pitch: tv.rotation.x }) };
+
+if (REDUCED){
+  $('hint').textContent = 'reduced motion active — screen resolved, no flicker or drift';
+}
+</script>
+</body>
+</html>
