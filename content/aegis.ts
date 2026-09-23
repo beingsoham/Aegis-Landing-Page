@@ -309,18 +309,30 @@ export const faq = {
   cite: '§20',
 };
 
+export const architecture = {
+  kicker: 'System architecture',
+  title: 'One session,',
+  split: 'two independent transports',
+  sub: 'The same cryptographic session runs over the relay or over a direct local connection. The crypto engine does not know which is carrying it, and the relay holds nothing that could open either.',
+  cite: '§4',
+  src: 'architecture.png',
+  alt: 'Aegis architecture. Client devices A and B each run a crypto engine whose private keys never leave the device, alongside an encrypted local message store. Between them, a LAN transport provides JmDNS peer discovery and a direct Netty TCP channel requiring no internet. Below, the Spring Boot server acts as a blind relay — auth service, pre-key directory, ciphertext relay and offline queue — backed by Postgres holding only public keys and ciphertext blobs.',
+  legend: 'Solid = server path · Dashed = LAN path · Highlighted = cryptographic session',
+};
+
 export const footer = {
-  /* §22 is still the placeholder template in the manual — fill these in. */
   team: {
-    name: '[Team name]',
-    psId: '[PS ID]',
-    institution: '[Institution]',
+    name: 'QUBIT',
+    psId: 'SIH26237',
+    psTitle: 'Post Quantum Secure Communication Overlay',
+    theme: 'Cybersecurity',
+    institution: 'Vishwakarma University',
     event: 'Smart India Hackathon 2026',
   },
   links: [
-    { label: 'Documentation', href: '#' },
-    { label: 'Architecture',  href: '#' },
-    { label: 'Research',      href: '#' },
+    { label: 'Architecture',  href: '#architecture' },
+    { label: 'Transport',     href: '#transport' },
+    { label: 'Blind relay',   href: '#relay' },
   ],
   /* Every qualification collects here, each linked to the section stating it. */
   disclaimers: [

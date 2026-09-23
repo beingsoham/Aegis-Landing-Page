@@ -64,6 +64,20 @@ styles/       design tokens and CSS modules
 docs/         reference renders
 ```
 
+## Architecture
+
+![Architecture](public/architecture.png)
+
+## Team
+
+| | |
+|---|---|
+| Team | QUBIT |
+| Problem statement | SIH26237 — Post Quantum Secure Communication Overlay |
+| Theme | Cybersecurity |
+| Institution | Vishwakarma University |
+| Event | Smart India Hackathon 2026 |
+
 ## Status
 
 Prototype. Not audited. Not for production use.

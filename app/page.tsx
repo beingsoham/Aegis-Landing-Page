@@ -19,6 +19,7 @@ export default function Page() {
         <Problems />
         <Stack />
         <Transport />
+        <Architecture />
         <Relay />
         <Gaps />
       </main>
@@ -123,6 +124,22 @@ function Transport() {
   );
 }
 
+function Architecture() {
+  return (
+    <Section id="architecture" label="System architecture">
+      <Head kicker={C.architecture.kicker} title={C.architecture.title}
+            split={C.architecture.split} sub={C.architecture.sub}
+            cite={C.architecture.cite} wide />
+      <figure className={s.diagramPlate} data-reveal>
+        {/* Authored on a light ground; inverted to sit on the page without
+            redrawing it. The hue-rotate puts the line colours back. */}
+        <img src={C.architecture.src} alt={C.architecture.alt} width={1220} height={971} />
+        <figcaption>{C.architecture.legend}</figcaption>
+      </figure>
+    </Section>
+  );
+}
+
 function Relay() {
   const rows = C.relay.may.map((m, i) => [m, C.relay.never[i]] as const);
   return (
@@ -177,10 +194,13 @@ function Footer() {
         <div className={s.footerLinks}>
           {C.footer.links.map((l) => <a className={s.footerLink} key={l.label} href={l.href}>{l.label}</a>)}
         </div>
-        <div className={s.meta}>
-          <span>{C.footer.team.name}</span><span>{C.footer.team.psId}</span>
-          <span>{C.footer.team.institution}</span><span>{C.footer.team.event}</span>
-        </div>
+        <dl className={s.meta}>
+          <dt>Team</dt><dd>{C.footer.team.name}</dd>
+          <dt>Problem statement</dt><dd>{C.footer.team.psId} · {C.footer.team.psTitle}</dd>
+          <dt>Theme</dt><dd>{C.footer.team.theme}</dd>
+          <dt>Institution</dt><dd>{C.footer.team.institution}</dd>
+          <dt>Event</dt><dd>{C.footer.team.event}</dd>
+        </dl>
         <ul className={s.disclaimers}>
           {C.footer.disclaimers.map((d) => (
             <li key={d.ref}>{d.text} <a href="#">{d.ref}</a></li>
