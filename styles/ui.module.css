@@ -1,0 +1,55 @@
+.shell { max-width: var(--content); margin: 0 auto; padding: 0 var(--gutter); }
+
+/* ===== Section: each one is a shot ====================================== */
+.section { position: relative; padding: var(--s-8) 0; }
+.hairline { border-top: 1px solid var(--rule); }
+
+/* centred header, generous air, one idea */
+.head { text-align: center; max-width: 760px; margin: 0 auto var(--s-6); }
+.headWide { max-width: 940px; }
+.kicker {
+  font-family: var(--font-mono);
+  font-size: var(--t-xs); letter-spacing: 0.32em; text-transform: uppercase;
+  color: var(--signal); margin-bottom: var(--s-3);
+  display: flex; align-items: center; justify-content: center; gap: 0.9em;
+}
+.kicker::before, .kicker::after {
+  content: ''; width: 26px; height: 1px; background: currentColor; opacity: 0.5;
+}
+.title {
+  font-size: var(--d-2); line-height: 1.02; letter-spacing: -0.042em;
+  font-weight: 600; text-wrap: balance; max-width: 16ch; margin-inline: auto;
+}
+/* the signature move: one headline split across two values for depth */
+.title em { font-style: normal; color: var(--fg-2); }
+.titleSm { font-size: var(--d-3); letter-spacing: -0.03em; }
+
+.sub {
+  margin: var(--s-3) auto 0;
+  font-size: var(--t-md); line-height: 1.6; color: var(--fg-2); max-width: 52ch;
+}
+.cite {
+  font-family: var(--font-mono); font-size: var(--t-xs);
+  color: var(--fg-3); letter-spacing: 0.08em; margin-left: 0.7em; white-space: nowrap;
+}
+
+.body { font-size: var(--t-base); line-height: 1.68; color: var(--fg-2); max-width: var(--measure); }
+.dim { color: var(--fg-3); }
+.mono { font-family: var(--font-mono); font-size: 0.94em; letter-spacing: 0; color: var(--fg); }
+
+/* ===== Controls: pills ================================================== */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.6em;
+  min-height: 48px; padding: 0.85em 1.7em;
+  font-size: var(--t-base); font-weight: 500; letter-spacing: -0.01em;
+  border-radius: 100px; border: 1px solid transparent;
+  background: var(--fg); color: #000;
+  transition: background 0.35s var(--ease), color 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+.btn:hover, .btn:focus-visible { background: var(--signal); }
+.btnGhost {
+  background: transparent; color: var(--fg-2); border-color: var(--rule-2);
+}
+.btnGhost:hover, .btnGhost:focus-visible {
+  background: transparent; color: var(--fg); border-color: var(--fg);
+}
